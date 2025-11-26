@@ -1,0 +1,2 @@
+* * * * * root python3 /code/deans_api/manage.py runcrons  >> /var/log/cron.log
+# Mandatory blank line

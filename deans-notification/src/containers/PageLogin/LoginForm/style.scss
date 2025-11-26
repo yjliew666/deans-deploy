@@ -1,0 +1,22 @@
+:global {
+  .login-form {
+    max-width: 300px;
+    margin: auto !important; // override
+    text-align: left;
+  }
+
+  .login-form-forgot {
+    float: right;
+  }
+
+  .login-form-button {
+    width: 100%;
+  }
+}
+
+:local {
+  .loginButton {
+    width: 100%;
+    margin-top: 1rem;
+  }
+}

@@ -1,0 +1,59 @@
+:local {
+  .container {
+    display: flex;
+    flex-direction: row;
+    padding: 1rem;
+    position: relative;
+  }
+
+  .status {
+    position: sticky;
+    top: 1rem;
+    margin-top: 2rem;
+    background-color: white;
+  }
+
+  .header {
+    color: black;
+    font-size: 2rem;
+  }
+
+  .left {
+    flex: 1;
+    margin-right: 2rem;
+    margin-top: -1rem;
+    position: relative;
+  }
+
+  .right {
+    flex: 4;
+    padding-right: 2rem;
+    padding-top: 0.5rem;
+  }
+
+  .map {
+    margin-top: 0.5rem;
+    height: 25rem;
+    width: 100%;
+    // z-index: -1;
+  }
+
+  // .buttonGroup {
+  //   margin-top: 1rem;
+  // }
+
+  .activeCrisisListTableContainer {
+    margin-top: 2rem;
+    width: 100%;
+  }
+
+  .subHeader {
+    color: black;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .activeCrisisListTable {
+    margin-top: 1.5rem;
+  }
+}

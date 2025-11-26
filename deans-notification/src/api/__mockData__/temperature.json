@@ -1,0 +1,174 @@
+{
+  "metadata": {
+    "stations": [
+      {
+        "id": "S109",
+        "device_id": "S109",
+        "name": "Ang Mo Kio Avenue 5",
+        "location": {
+          "latitude": 1.3764,
+          "longitude": 103.8492
+        }
+      },
+      {
+        "id": "S117",
+        "device_id": "S117",
+        "name": "Banyan Road",
+        "location": {
+          "latitude": 1.256,
+          "longitude": 103.679
+        }
+      },
+      {
+        "id": "S50",
+        "device_id": "S50",
+        "name": "Clementi Road",
+        "location": {
+          "latitude": 1.3337,
+          "longitude": 103.7768
+        }
+      },
+      {
+        "id": "S107",
+        "device_id": "S107",
+        "name": "East Coast Parkway",
+        "location": {
+          "latitude": 1.3135,
+          "longitude": 103.9625
+        }
+      },
+      {
+        "id": "S108",
+        "device_id": "S108",
+        "name": "Marina Gardens Drive",
+        "location": {
+          "latitude": 1.2799,
+          "longitude": 103.8703
+        }
+      },
+      {
+        "id": "S44",
+        "device_id": "S44",
+        "name": "Nanyang Avenue",
+        "location": {
+          "latitude": 1.34583,
+          "longitude": 103.68166
+        }
+      },
+      {
+        "id": "S121",
+        "device_id": "S121",
+        "name": "Old Choa Chu Kang Road",
+        "location": {
+          "latitude": 1.37288,
+          "longitude": 103.72244
+        }
+      },
+      {
+        "id": "S111",
+        "device_id": "S111",
+        "name": "Scotts Road",
+        "location": {
+          "latitude": 1.31055,
+          "longitude": 103.8365
+        }
+      },
+      {
+        "id": "S60",
+        "device_id": "S60",
+        "name": "Sentosa",
+        "location": {
+          "latitude": 1.25,
+          "longitude": 103.8279
+        }
+      },
+      {
+        "id": "S24",
+        "device_id": "S24",
+        "name": "Upper Changi Road North",
+        "location": {
+          "latitude": 1.3678,
+          "longitude": 103.9826
+        }
+      },
+      {
+        "id": "S116",
+        "device_id": "S116",
+        "name": "West Coast Highway",
+        "location": {
+          "latitude": 1.281,
+          "longitude": 103.754
+        }
+      },
+      {
+        "id": "S100",
+        "device_id": "S100",
+        "name": "Woodlands Road",
+        "location": {
+          "latitude": 1.4172,
+          "longitude": 103.74855
+        }
+      }
+    ],
+    "reading_type": "DBT 1M F",
+    "reading_unit": "deg C"
+  },
+  "items": [
+    {
+      "timestamp": "2018-11-09T02:40:00+08:00",
+      "readings": [
+        {
+          "station_id": "S109",
+          "value": 26
+        },
+        {
+          "station_id": "S117",
+          "value": 28.1
+        },
+        {
+          "station_id": "S50",
+          "value": 26.2
+        },
+        {
+          "station_id": "S107",
+          "value": 27.4
+        },
+        {
+          "station_id": "S108",
+          "value": 27.6
+        },
+        {
+          "station_id": "S44",
+          "value": 26.3
+        },
+        {
+          "station_id": "S121",
+          "value": 26.7
+        },
+        {
+          "station_id": "S111",
+          "value": 26.9
+        },
+        {
+          "station_id": "S60",
+          "value": 27.8
+        },
+        {
+          "station_id": "S24",
+          "value": 26.4
+        },
+        {
+          "station_id": "S116",
+          "value": 27.4
+        },
+        {
+          "station_id": "S100",
+          "value": 26.6
+        }
+      ]
+    }
+  ],
+  "api_info": {
+    "status": "healthy"
+  }
+}

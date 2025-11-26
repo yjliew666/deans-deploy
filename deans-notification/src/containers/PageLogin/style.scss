@@ -1,0 +1,22 @@
+:local {
+  .container {
+    display: flex;
+    flex-direction: row;
+    padding: 0 3rem;
+    justify-content: center;
+  }
+
+  .innerContainer {
+    width: 40%;
+  }
+
+  .header {
+    font-size: 1.2rem;
+    color: black;
+    margin-top: 2rem;
+  }
+
+  .form {
+    margin-top: 2rem;
+  }
+}

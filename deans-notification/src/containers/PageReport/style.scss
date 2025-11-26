@@ -1,0 +1,17 @@
+:local {
+  .container {
+    display: flex;
+    flex-direction: column;
+    padding: 0 3rem;
+  }
+
+  .header {
+    font-size: 2rem;
+    margin-top: 2rem;
+    color: black;
+  }
+
+  .form {
+    margin-top: 2rem;
+  }
+}
