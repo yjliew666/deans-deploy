@@ -4,6 +4,9 @@ import datetime
 import requests
 from django.template.loader import get_template
 from django.template import Context
+# --- REENGINEERING CHANGE 1: Import Django Settings ---
+from django.conf import settings
+# ------------------------------------------------------
 
 import logging
 logger = logging.getLogger("django")
@@ -12,7 +15,8 @@ email_template = get_template('president_email.html')
 
 def construct_report_data():
     payload = {}
-    # d = Context({ 'username': username })
+    # d = Context({ 'username': username 
+    # [cite: 43] })
     # html_content = htmly.render(d)
 
     created_time = datetime.datetime.now() - datetime.timedelta(minutes=30) # crisis created since 30 mins ago
@@ -28,6 +32,7 @@ def construct_report_data():
     payload['active_crisis'] = []
     for i in new_crisis:
         payload['new_crisis'].append(
+          
             {
             "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
             "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
@@ -35,6 +40,7 @@ def construct_report_data():
             "location2": i.crisis_location2,
             "type": ", ".join([j.name for j in i.crisis_type.all()]),
             "status": i.crisis_status,
+       
             "crisis_description": i.crisis_description,
             "crisis_assistance": ", ".join([j.name for j in i.crisis_assistance.all()]),
             "assistance_description": i.crisis_assistance_description
@@ -44,13 +50,15 @@ def construct_report_data():
         payload['recent_resolved_crisis'].append(
             {
             "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
+      
             "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
             "location": i.crisis_location1,
             "location2": i.crisis_location2,
             "type": ", ".join([j.name for j in i.crisis_type.all()]),
             "status": i.crisis_status,
             "crisis_description": i.crisis_description,
-            "crisis_assistance": ", ".join([j.name for j in i.crisis_assistance.all()]),
+            "crisis_assistance": ", ".join([j.name for 
+j in i.crisis_assistance.all()]),
             "assistance_description": i.crisis_assistance_description
         }
         )
@@ -59,6 +67,7 @@ def construct_report_data():
             {
             "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
             "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
+        
             "location": i.crisis_location1,
             "location2": i.crisis_location2,
             "type": ", ".join([j.name for j in i.crisis_type.all()]),
@@ -66,7 +75,8 @@ def construct_report_data():
             "crisis_description": i.crisis_description,
             "crisis_assistance": ", ".join([j.name for j in i.crisis_assistance.all()]),
             "assistance_description": i.crisis_assistance_description
-        }
+       
+            }
         )
     return payload
 
@@ -78,10 +88,15 @@ class CronEmail(CronJobBase):
     print("CRON JOB!!!!!!!")
     def do(self):
         print("Doing")
-        url = "http://notification:8000/reports/"
+        # --- REENGINEERING CHANGE 2: Decouple Notification URL ---
+        # Replace hardcoded URL string with the settings variable
+        # Note: We must append the /reports/ endpoint to the base URL
+        url = f"{settings.NOTIFICATION_SERVICE_URL}/reports/"
+        # --------------------------------------------------------
         payload = construct_report_data()
         print("payload", payload)
         headers = {'Content-Type': "application/json"}
+   
         print("Before sending")
         response = requests.request("POST", url, json=payload, headers=headers)
         print("Sent request")
@@ -95,9 +110,13 @@ class CronEmail(CronJobBase):
 #     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
 #     code = 'api.CronSocialMedia'
 #     def do(self):
-#         url = "http://notification:8000/socialmessages/"
+#         # --- REENGINEERING CHANGE 3: Decouple Social Media URL (conceptual) ---
+#         # We apply the same logic here to decouple the second hardcoded URL
+#         url = f"{settings.NOTIFICATION_SERVICE_URL}/socialmessages/"
+#         # --------------------------------------------------------------------
 #         payload = construct_report_data()
 #         headers = {'Content-Type': "application/json"}
 #         response = requests.request("POST", url, json=payload, headers=headers)
 #         # logger.info(response.text)
 #         logger.info('Sent message to social medias.')
+```eof
