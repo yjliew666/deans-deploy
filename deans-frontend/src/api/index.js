@@ -4,7 +4,7 @@ axios.defaults.baseURL = "http://localhost:8000/api";
 axios.defaults.timeout = 5000;
 
 const _getCSRFToken = () => {
-  const cookies = document.cookie && document.cookie.split("; ");
+  const cookies = document.cookie ? document.cookie.split("; ") : [];
   let csrftoken = "";
   cookies.forEach(cookie => {
     if (cookie.slice(0, 9) === "csrftoken") {

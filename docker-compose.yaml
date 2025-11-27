@@ -24,6 +24,7 @@ services:
       - db_network
     environment:
       POSTGRES_PASSWORD: password
+      TZ: UTC
   redis:
     image: redis:7-alpine
     command: redis-server
