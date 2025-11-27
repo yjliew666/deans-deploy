@@ -15,15 +15,17 @@ networks:
 
 services:
   db:
-    image: postgres
+    image: postgres:9.6
     ports:
       - "5432:5432"
     env_file:
       - default.env
     networks: 
       - db_network
+    environment:
+      POSTGRES_PASSWORD: password
   redis:
-    image: redis:2.8
+    image: redis:7-alpine
     command: redis-server
     ports:
       - "6379:6379"
@@ -42,34 +44,37 @@ services:
       - static_volume:/static-django
     depends_on:
       - db
-      - redis
+      # - redis
     networks: 
       - db_network
       - nginx_network
       - notification_network
       - redis_network
-  notification:
-    build:
-      context: ./deans-notification
-    image: notification_image
-    entrypoint: "start_server.sh"
-    # command: "python -c \"while True: pass\""
-    # ports:
-    #   - "8000:3000"
-    env_file:
-      - default.env
-    volumes:
-      - ./deans-notification:/work
-    networks:
-      - notification_network
-  # frontend:
+  # notification:
   #   build:
-  #     context: ./deans-frontend
-  #   image: frontend_image
+  #     context: ./deans-notification
+  #   image: notification_image
+  #   entrypoint: "start_server.sh"
+  #   # command: "python -c \"while True: pass\""
+  #   # ports:
+  #   #   - "8000:3000"
+  #   env_file:
+  #     - default.env
+  #   volumes:
+  #     - ./deans-notification:/work
   #   networks:
-  #     - frontend_network
-  #   ports:
-  #     - 3000:3000
+  #     - notification_network
+  frontend:
+    build: ./deans-frontend
+    image: frontend_image
+    networks:
+      # - frontend_network
+      - nginx_network
+    ports:
+      - 3000:3000
+    volumes:
+      - ./deans-frontend:/work/
+    command: yarn start
   nginx:
     build:
       context: ./nginx
