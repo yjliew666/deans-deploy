@@ -33,15 +33,9 @@ class PageHome extends React.Component {
         <NavBar />
         <div className={styles.container}>
           <div className={styles.left}>
-            <div className={styles.status}>
-              <RealTimePSI />
-            </div>
-            <div className={styles.status}>
-              <RealTimeWeather />
-            </div>
-            <div className={styles.status}>
-              <RealTimeCrisisStatus />
-            </div>
+            <RealTimePSI variant="home"/>
+            <RealTimeWeather variant="home"/>
+            <RealTimeCrisisStatus variant="home"/>
           </div>
           <div className={styles.right}>
             <div className={styles.map}>

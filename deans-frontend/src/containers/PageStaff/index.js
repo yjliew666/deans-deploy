@@ -34,18 +34,12 @@ class PageStaff extends React.Component {
         <div className={styles.container}>
           <div className={styles.left}>
             <Menu isAdmin={this.props.isAdmin} />
-            <div className={styles.status}>
-              <RealTimePSI />
-            </div>
-            <div className={styles.status}>
-              <RealTimeWeather />
-            </div>
-            <div className={styles.status}>
-              <RealTimeStatus
-                numOfPending={numOfPending || 0}
-                numOfDispatched={numOfDispatched || 0}
-              />
-            </div>
+            <RealTimePSI />
+            <RealTimeWeather />
+            <RealTimeStatus
+              numOfPending={numOfPending || 0}
+              numOfDispatched={numOfDispatched || 0}
+            />
           </div>
           <div className={styles.right}>
             <Switch>

@@ -8,11 +8,17 @@
   .item {
     padding: 1rem;
     cursor: pointer;
-    color: black;
+    color: #444;
 
     &:hover {
       background-color: rgba(250,250,250,.9);
 
     }
+  }
+
+  .activeItem {
+    background-color: rgba(250,250,250,.9);
+    font-weight: 600;
+    color: #000;
   }
 }

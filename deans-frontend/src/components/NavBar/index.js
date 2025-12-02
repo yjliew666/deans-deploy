@@ -3,7 +3,7 @@ import { Popover, Button, message } from "antd";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { getCurrentUser, userLogout } from "@redux/actions";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import logo from "@assets/logo.png";
 
 import * as styles from "./style.scss";
@@ -19,18 +19,18 @@ class NavBar extends React.Component {
       <div className={styles.container}>
         <div className={styles.left}>
           <div className={styles.item}>
-            <Link to="/">
+            <NavLink exact to="/">
               <img src={logo} className={styles.logo} />
-            </Link>
+            </NavLink>
           </div>
           <div className={styles.item + " " + styles.brand}>
-            <Link to="/">Dean&#39;s Crisis Management System</Link>
+            <NavLink exact to="/">Dean&#39;s Crisis Management System</NavLink>
           </div>
           <div className={styles.item}>
-            <Link to="/">Home</Link>
+            <NavLink exact to="/" activeClassName={styles.active}>Home</NavLink>
           </div>
           <div className={styles.item}>
-            <Link to="/report">Report</Link>
+            <NavLink to="/report" activeClassName={styles.active}>Report</NavLink>
           </div>
         </div>
         <div className={styles.right}>
@@ -51,10 +51,10 @@ class NavBar extends React.Component {
                   </Button>
                 }
               >
-                <Link to="/staff/dashboard">{currentUser}</Link>
+                <NavLink to="/staff/dashboard" activeClassName={styles.active}>{currentUser}</NavLink>
               </Popover>
             ) : (
-              <Link to="/login">Login</Link>
+              <NavLink to="/login" activeClassName={styles.active}>Login</NavLink>
             )}
           </div>
         </div>

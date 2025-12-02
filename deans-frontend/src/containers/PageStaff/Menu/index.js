@@ -1,21 +1,33 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import * as styles from "./style.scss";
 
 const Menu = props => (
   <div className={styles.container}>
-    <Link to="/staff/dashboard">
-      <div className={styles.item}>Dashboard</div>
-    </Link>
+    <NavLink 
+      to="/staff/dashboard"
+      className={styles.item} 
+      activeClassName={styles.activeItem}
+    >
+      Dashboard
+    </NavLink>
     {props.isAdmin && (
       <React.Fragment>
-        <Link to="/staff/user-center">
-          <div className={styles.item}>User Center</div>
-        </Link>
-        <Link to="/staff/setting">
-          <div className={styles.item}>Setting</div>
-        </Link>
+        <NavLink
+          to="/staff/user-center"
+          className={styles.item}
+          activeClassName={styles.activeItem}
+        >
+          User Center
+        </NavLink>
+        <NavLink
+          to="/staff/setting"
+          className={styles.item}
+          activeClassName={styles.activeItem}
+        >
+          Setting
+        </NavLink>
       </React.Fragment>
     )}
   </div>

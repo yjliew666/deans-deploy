@@ -78,7 +78,7 @@ class CrisisReportForm extends React.Component {
         );
         form.append(
           "crisis_assistance_description",
-          typeof assistanceDescription === "undefined" ? "" : crisisDescription
+          typeof assistanceDescription === "undefined" ? "" : assistanceDescription
         );
         this.props
           .reportCrises(form)
