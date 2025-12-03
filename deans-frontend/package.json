@@ -9,10 +9,10 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "webpack-dev-server --watch --config webpack/webpack.dev.js",
-    "build": "NODE_ENV=production webpack --config webpack/webpack.prod.js",
-    "lint": "eslint --fix src",
-    "test": "jest"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --coverage --watchAll=false",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "antd": "^3.9.2",

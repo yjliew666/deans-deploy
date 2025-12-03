@@ -1,16 +1,29 @@
-# FROM nginx:1.15.2-alpine
-# # you have to build before copy
-# COPY ./dist /var/www
-# COPY nginx.conf /etc/nginx/nginx.conf
-# EXPOSE 80
-# ENTRYPOINT ["nginx","-g","daemon off;"]
+# Stage 1: Build
+FROM node:18-alpine as builder
 
-FROM node:8.11.1
-# you have to build before copy
-COPY . /var/www
-WORKDIR /var/www
-RUN yarn install
-RUN yarn build
-# RUN yarn start
-# EXPOSE 80
-# ENTRYPOINT ["yarn","start"]
+WORKDIR /work
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Runtime
+FROM node:18-alpine
+
+WORKDIR /work
+
+# Install serve to run the app
+RUN npm install -g serve
+
+COPY --from=builder /work/package.json .
+COPY --from=builder /work/node_modules ./node_modules
+COPY --from=builder /work/build ./build
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
+
+CMD ["serve", "-s", "build", "-l", "3000"]

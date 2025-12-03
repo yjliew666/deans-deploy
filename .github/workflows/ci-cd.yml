@@ -1,0 +1,201 @@
+name: CI/CD Pipeline - Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        working-directory: ./deans-api
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint black isort
+      
+      - name: Run Black formatter check
+        working-directory: ./deans-api
+        run: black --check deans_api/
+      
+      - name: Run isort import sorter check
+        working-directory: ./deans-api
+        run: isort --check-only deans_api/
+      
+      - name: Run Flake8 linting
+        working-directory: ./deans-api
+        run: flake8 deans_api/
+      
+      - name: Run Pylint
+        working-directory: ./deans-api
+        continue-on-error: true
+        run: pylint deans_api/
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      postgres:
+        image: postgres:9.6-alpine
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: deans_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        working-directory: ./deans-api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run Django migrations
+        working-directory: ./deans-api
+        run: python manage.py migrate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/deans_test
+      
+      - name: Run pytest with coverage
+        working-directory: ./deans-api
+        run: pytest --cov=deans_api --cov-report=xml --cov-report=html
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/deans_test
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./deans-api/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: deans-api/htmlcov/
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Log in to Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha
+      
+      - name: Build and push Django API image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./deans-api
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Nginx image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nginx
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nginx:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+    continue-on-error: true
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './deans-api'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  generate-reports:
+    name: Generate Test & Build Reports
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: always()
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download test artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Create summary report
+        run: |
+          echo "# CI/CD Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
