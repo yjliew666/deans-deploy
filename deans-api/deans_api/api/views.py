@@ -1,4 +1,9 @@
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.db import connection
+import redis
+import logging
 
 # Create your views here.
 from rest_framework import viewsets, permissions, mixins, generics
@@ -24,6 +29,8 @@ from rest_framework.permissions import (
     IsAdminUser,
     IsAuthenticatedOrReadOnly,
 )
+
+logger = logging.getLogger(__name__)
 
 # import channels.layers
 # from asgiref.sync import async_to_sync
@@ -209,3 +216,44 @@ class EmergencyAgenciesPartialUpdateView(generics.GenericAPIView, mixins.UpdateM
         event = self.get_object(pk)
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@require_http_methods(["GET"])
+def health_check(request):
+    """
+    Health check endpoint for Docker and monitoring.
+    Returns the status of critical services.
+    """
+    status = {
+        'status': 'healthy',
+        'services': {}
+    }
+    
+    # Check database
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+        status['services']['database'] = 'healthy'
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        status['services']['database'] = 'unhealthy'
+        status['status'] = 'degraded'
+    
+    # Check Redis
+    try:
+        import os
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+        r = redis.from_url(redis_url)
+        r.ping()
+        status['services']['redis'] = 'healthy'
+    except Exception as e:
+        logger.warning(f"Redis health check failed: {e}")
+        status['services']['redis'] = 'unavailable'
+    
+    status_code = 200 if status['status'] == 'healthy' else 503
+    return JsonResponse(status, status=status_code)
+
+
+@require_http_methods(["GET"])
+def readiness_check(request):
+    """Readiness check for Kubernetes/orchestration."""
+    return JsonResponse({'ready': True}, status=200)

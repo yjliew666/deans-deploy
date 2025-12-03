@@ -1,46 +1,188 @@
 # Dean's Crisis Management System
 
-The Ministry of Home Affairs (MHA) is procuring a Crisis Management System (CMS) to allow seamless collaboration between government agencies in times of emergency. The Prime Minister, cabinet ministers and government agency key decision makers shall monitor the crisis situation through the CMS.
+Automated CI/CD pipeline for building, testing, and deploying the Dean's Crisis Management platform.
 
-## Use Cases
+## Project Structure
 
-![Use Cases](img/use-case.png)
+```
+deans-deploy/
+├── deans-api/              # Django REST API
+├── deans-frontend/         # React Frontend
+├── nginx/                  # Nginx reverse proxy
+├── cron/                   # Cron jobs
+├── docker-compose.yaml     # Docker Compose configuration
+├── .github/workflows/      # GitHub Actions CI/CD
+├── deploy.sh               # Deployment script
+└── Makefile                # Development commands
+```
 
-## Software Architecture (Highest Level)
+## Prerequisites
 
-**3 Tier Architectural Style** is adopted for this system.
-Presentation Tier: Web Client
-Application Tier: Core API, Notification
-Datastore Tier: Datastore
+- Docker 20.10+
+- Docker Compose 1.29+
+- Python 3.9+ (for local development)
+- Node.js 18+ (for frontend development)
 
-![Architecture](img/architecture.png)
+## Quick Start
 
-## Key Technologies
+### Local Development
 
-![Tech stack](img/tech-stack.png)
+```bash
+# Install dependencies
+make install
 
-#### Web Client
+# Run linting and formatting
+make lint
+make format
 
-Web Client System is the Graphical User Interface of the Crisis Management System and the entry point for users. It is built with JavaScript, HTML and CSS using ReactJS framework and Redux as state manager.
+# Run tests
+make test
 
-#### Core API
+# Build Docker images
+make build
 
-Core API System handles all requests between Web Client and Notification. It provides RESTful API endpoints and is built with Python using Django Rest Framework. Django Channels and Redis are used to implement WebSocket to achieve duplex communication with Web Client System. To schedule periodic task such as sending crisis summary report, Core API makes use of Django Cron. All persistence data are stored in a Postgresql database.
+# Start services
+docker-compose up -d
 
-#### Notification
+# View logs
+docker-compose logs -f web
+```
 
-Notification handles requests from Core API and dispatch notifications accordingly. It is built on Python-Flask and integrated with Facebook API, Twitter API, SMTP Email Client and Twilio SMS API.
+### Environment Setup
 
-## Peek
+```bash
+# Copy example environment file
+cp .env.example default.env
 
-![screenshot](img/screenshot.png)
-![screenshot2](img/screenshot2.png)
+# Edit for your local setup
+nano default.env
 
-## How to Run
+# For staging/production
+cp .env.example .env.staging
+nano .env.staging
+```
 
-For easy development environment setup, Docker is used throughout the development. To run the system, please follow the instructions:
+## CI/CD Pipeline
 
-1. Install `Docker` and `Yarn` on your computer.
-2. Go to project root directory and type the following command in terminal: ```docker-compose up --build```. This will launch the Core API System and Notification System.
-3. Go to `/deans-frontend` directory and type the following commands in terminal: ```yarn install```, ```yarn start```. This will launch the Web Client System.
-4. Go to `localhost:8000` and start exploring!
+### Automated Workflows
+
+1. **Lint** - Code quality checks (flake8, pylint, black, isort)
+2. **Test** - Unit and integration tests with coverage
+3. **Build** - Docker image creation
+4. **Security Scan** - Vulnerability scanning with Trivy
+5. **Report** - Test reports and artifacts
+
+### Triggering Workflows
+
+- **Push to main**: Full pipeline (lint → test → build → scan)
+- **Push to develop**: Full pipeline
+- **Pull requests**: Lint and test only
+
+## Deployment
+
+### Staging
+
+```bash
+./deploy.sh staging v1.0.0
+```
+
+### Production
+
+```bash
+./deploy.sh production v1.0.0
+```
+
+## Services
+
+### Django API (`web`)
+- Port: 8000 (internal)
+- Health check: `GET /health`
+- Volume: `./deans-api/deans_api:/work/deans-api/deans_api`
+
+### React Frontend (`frontend`)
+- Port: 3000
+- Health check: HTTP request to port 3000
+
+### PostgreSQL (`db`)
+- Port: 5432
+- Default DB: `deans_db`
+- Volume: `db_data`
+
+### Redis (`redis`)
+- Port: 6379
+- Volume: `redis_data`
+
+### Nginx (`nginx`)
+- Port: 8000 (external)
+- Health check: `GET /health`
+
+## Logs
+
+```bash
+# All services
+docker-compose logs
+
+# Specific service
+docker-compose logs -f web
+
+# Last 100 lines
+docker-compose logs --tail=100
+```
+
+## Testing
+
+```bash
+# Run all tests
+make test
+
+# Run specific test
+cd deans-api && pytest tests/test_models.py
+
+# With coverage report
+cd deans-api && pytest --cov=deans_api --cov-report=html
+```
+
+## Code Quality
+
+```bash
+# Lint
+make lint
+
+# Format code
+make format
+
+# Check formatting without changing
+cd deans-api && black --check deans_api/
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+```bash
+docker-compose logs db
+docker-compose exec db psql -U postgres
+```
+
+### Port Already in Use
+```bash
+lsof -i :8000
+lsof -i :3000
+lsof -i :5432
+```
+
+### Clear Everything
+```bash
+docker-compose down -v
+make clean
+```
+
+## Contributing
+
+1. Create a feature branch
+2. Make changes and run tests
+3. Submit pull request
+4. CI/CD pipeline must pass
+
+## License
+
+Proprietary - Dean's Crisis Management System
