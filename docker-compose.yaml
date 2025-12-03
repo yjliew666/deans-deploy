@@ -1,4 +1,4 @@
-version: '3'
+# version: '3'
 
 networks:
   nginx_network:
@@ -79,7 +79,7 @@ services:
   nginx:
     build:
       context: ./nginx
-    image: nginx:1.13
+    image: nginx:latest
     ports:
       - 8000:80
     volumes:
