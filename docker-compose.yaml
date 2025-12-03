@@ -51,20 +51,20 @@ services:
       - nginx_network
       - notification_network
       - redis_network
-  # notification:
-  #   build:
-  #     context: ./deans-notification
-  #   image: notification_image
-  #   entrypoint: "start_server.sh"
-  #   # command: "python -c \"while True: pass\""
-  #   # ports:
-  #   #   - "8000:3000"
-  #   env_file:
-  #     - default.env
-  #   volumes:
-  #     - ./deans-notification:/work
-  #   networks:
-  #     - notification_network
+  notification:
+    build:
+      context: ./deans-notification
+    image: notification_image
+    entrypoint: "start_server.sh"
+    # command: "python -c \"while True: pass\""
+    ports:
+      - "8001:8000"
+    env_file:
+      - default.env
+    volumes:
+      - ./deans-notification:/work
+    networks:
+      - notification_network
   frontend:
     build: ./deans-frontend
     image: frontend_image

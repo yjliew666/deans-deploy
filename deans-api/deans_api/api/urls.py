@@ -15,6 +15,7 @@ from .views import (
     EmergencyAgenciesPartialUpdateView,
     SiteSettingViewSet
 )
+from .health import health_check, readiness_check
 '''
     The Url Router here has dispatched all views in views.py to corresponding url.
     Api urls:
@@ -38,6 +39,7 @@ router.register(r'^emergencyagencies', EmergencyAgenciesView)
 router.register(r'^sitesettings', SiteSettingViewSet)
 
 
+
 urlpatterns = [
 	path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('rest_auth.urls')),
@@ -47,6 +49,8 @@ urlpatterns = [
     url(r'^crises/update-partial/(?P<pk>\d+)/$', CrisisPartialUpdateView.as_view(), name='crisis_partial_update'),
     url(r'^users/update-partial/(?P<pk>\d+)/$', UserPartialUpdateView.as_view(), name='user_partial_update'),
     url(r'^emergencyagencies/update-partial/(?P<pk>\d+)/$', EmergencyAgenciesPartialUpdateView.as_view(), name='emergencyagency_partial_update'),
+    url(r'^health/$', health_check, name='health_check'),
+    url(r'^ready/$', readiness_check, name='readiness_check'),
 ]
 # Registration with rest auth:
 # url(r'^rest-auth/', include('rest_auth.urls')),
