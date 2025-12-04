@@ -5,14 +5,6 @@ services:
     image: postgres
     ports:
       - "5432:5432"
-    # --- REENGINEERING CHANGE: FIX DB INITIALIZATION & DECOUPLE CREDENTIALS ---
-    # This block uses variables from the root .env file to configure the DB.
-    # This resolves the "Database is uninitialized, and superuser password is not specified" error.
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  # -------------------------------------------------------------------------
   redis:
     image: redis:2.8
     command: redis-server
@@ -22,13 +14,8 @@ services:
     build: .
     # command: "python -c \"while True: pass\""
     entrypoint: "start_django.sh"
-    # --- REENGINEERING CHANGE: INJECT SECRETS AND DECOUPLED CONFIG ---
-    # The .env file contains the DJANGO_SECRET_KEY and NOTIFICATION_SERVICE_URL,
-    # moving them out of committed code and into the environment.
     env_file:
       - default.env
-      - .env
-    # -----------------------------------------------------------------
     volumes:
       - ./data:/data
       - ./deans_api:/work/deans-api/deans_api

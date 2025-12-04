@@ -1,16 +1,15 @@
-# FROM nginx:1.15.2-alpine
-# # you have to build before copy
-# COPY ./dist /var/www
-# COPY nginx.conf /etc/nginx/nginx.conf
-# EXPOSE 80
-# ENTRYPOINT ["nginx","-g","daemon off;"]
+FROM python:3.6
 
-FROM node:8.11.1
-# you have to build before copy
-COPY . /var/www
-WORKDIR /var/www
-RUN yarn install
-RUN yarn build
-# RUN yarn start
-# EXPOSE 80
-# ENTRYPOINT ["yarn","start"]
+ENV IN_DOCKER "1"
+ENV BASEDIR /work
+ENV FLASK_ROOT $BASEDIR/deans-notification
+ENV DATA_ROOT /data
+ENV ENTRY_DIR $FLASK_ROOT
+ENV PATH "$FLASK_ROOT:$BASEDIR:$PATH"
+
+WORKDIR $BASEDIR
+ADD requirements.txt $BASEDIR/
+RUN pip install -r requirements.txt
+
+ADD * $BASEDIR/
+RUN chmod +x start_server.sh

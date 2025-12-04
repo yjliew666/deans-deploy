@@ -114,6 +114,9 @@ if('IN_DOCKER' in os.environ and os.environ['IN_DOCKER']=='1'):
         # -------------------------------------------------------------
         'HOST': 'db',
         'PORT': 5432,
+        'OPTIONS': {
+            'options': '-c timezone=UTC',
+        }
     },
 }
 else:

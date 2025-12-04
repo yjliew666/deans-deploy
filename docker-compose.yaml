@@ -15,7 +15,7 @@ networks:
 
 services:
   db:
-    image: postgres
+    image: postgres:9.6
     ports:
       - "5432:5432"
     # --- REENGINEERING CHANGE 1: FIX DB INITIALIZATION & DECOUPLE CREDENTIALS ---
@@ -34,7 +34,7 @@ services:
       - db_network
 
   redis:
-    image: redis:2.8
+    image: redis:7-alpine
     command: redis-server
     ports:
       - "6379:6379"
@@ -86,8 +86,16 @@ services:
 
   # frontend:
   #   build:
-  #     context: ./deans-frontend
-  #   image: frontend_image
+  #     context: ./deans-notification
+  #   image: notification_image
+  #   entrypoint: "start_server.sh"
+  #   # command: "python -c \"while True: pass\""
+  #   # ports:
+  #   #   - "8000:3000"
+  #   env_file:
+  #     - default.env
+  #   volumes:
+  #     - ./deans-notification:/work
   #   networks:
   #     - frontend_network
   #   ports:
