@@ -8,16 +8,14 @@ API Server that receives JSON requests through API endpoints & processes them
 '''
 from flask import Flask, request, Response
 from datetime import datetime
-import report_generation
-import facebook_client
-import sms_client
-import twitter_client
 import json
 import traceback
-import email_client
+
+from providers.registry import PROVIDERS
+
+
 
 app = Flask(__name__)
-report_count = 1
 
 @app.route('/')
 def hello_world():
@@ -39,71 +37,118 @@ JSON format:
 }
 '''
 
-# JSON format: {"message" : string}
 @app.route('/socialmessages/', methods=['POST'])
 def post_social_message():
-    try :
-        data = request.get_json()
-        print(data)
-        message = data['message']
-        print('Connecting to Twitter...')
-        twitter_client.main(message['twitterShare'])
-        print('Connecting to Facebook...')
-        facebook_client.main(message['facebookShare'])
-        json_response = {"result" : "Success!", "posted" : message}
+    """
+    JSON format:
+    {
+      "message": {
+        "twitterShare": "string",
+        "facebookShare": {
+          "shelterURL": "string",
+          "deansURL": "string",
+          "text": "string",
+          "recent_resolved_crisis": [],
+          "new_crisis": [],
+          "active_crisis": []
+        }
+      }
+    }
+    """
+    try:
+        data = request.get_json(force=True)
+        print("Incoming /socialmessages payload:", data)
 
-        return Response(json.dumps(json_response), status=201, mimetype='application/json')
+        message = data.get("message", {})
+        provider = PROVIDERS["social"]
+        ok = provider.send(message)
+
+        if not ok:
+            raise RuntimeError("SocialProvider failed to post to one or more channels")
+
+        json_response = {"result": "Success!", "posted": message}
+        return Response(json.dumps(json_response), status=201, mimetype="application/json")
 
     except Exception as e:
-        traceback.print_tb(e.__traceback__)
+        traceback.print_exc()
+        error_response = {"result": "Failure", "error": str(e)}
+        return Response(json.dumps(error_response), status=500, mimetype="application/json")
 
-# JSON format: {"number" : string, "message" : string}
+
 @app.route('/dispatchnotices/', methods=['POST'])
 def post_dispatch_notice():
-    data = request.get_json()
-    number = data['number']
-    message = data['message']
-    print('Connecting to Twilio...')
-    sms_client.main(number, message)
-    json_response = {"result": "Success!", "sent_to": number, "posted": message}
-    return Response(json.dumps(json_response), status=201, mimetype='application/json')
+    """
+    JSON format:
+    {
+      "number": "+60123456789",
+      "message": "Some crisis notice text"
+    }
+    """
+    try:
+        data = request.get_json(force=True)
+        number = data.get("number")
+        message_text = data.get("message")
 
-'''
-JSON format:
-{"email" : email address, 
-"cases" : 
-[{
-        "crisis_time" : datetime, 
-        "resolved_by" : datetime,
-        "location" : location,
-        "crisis_type" : string,
-        "crisis_description" : string,
-        "crisis_assistance": string
-},
-]}
-'''
+        print("Incoming /dispatchnotices payload:", data)
+
+        provider = PROVIDERS["whatsapp"]
+        ok = provider.send({
+            "number": number,
+            "message": message_text,
+        })
+
+        if not ok:
+            raise RuntimeError("TwilioProvider failed to send WhatsApp notice")
+
+        json_response = {"result": "Success!", "sent_to": number, "posted": message_text}
+        return Response(json.dumps(json_response), status=201, mimetype="application/json")
+
+    except Exception as e:
+        traceback.print_exc()
+        error_response = {"result": "Failure", "error": str(e)}
+        return Response(json.dumps(error_response), status=500, mimetype="application/json")
+
 @app.route('/reports/', methods=['POST'])
 def generate_report():
-    print("Called")
-    # global report_count
-    data = request.get_json()
-    time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    # json_file = "json_summary/report_" + time_stamp + ".json"
-    # with open(json_file, 'w+') as f:
-    #     json.dump(data, f)
-    print("received data", data)
-    # report_generation.json_to_pdf(report_count)
-    print('Generating Report...')
-    # report = "reports/report"+str(report_count)+'.pdf'
-    # report_count += 1
+    """
+    JSON format (actual fields come from core API):
+    {
+      "email": "recipient@example.com",
+      ... crisis data ...
+    }
+    """
+    try:
+        print("Called /reports")
+        data = request.get_json(force=True)
+        print("Received data:", data)
 
-    print('Connecting to Gmail...')
-    emailadd = data['email']
-    subject = "Crisis Summary Report for " + datetime.now().strftime("%I:%M%p on %B %d, %Y")
-    # email_client.main(emailadd, subject, report)
-    email_client.main(emailadd, subject, data)
-    json_response = {"result": "Success!", "sent_to": emailadd}
-    return Response(json.dumps(json_response), status=201, mimetype='application/json')
+        emailadd = data.get("email")
+        if not emailadd:
+            raise ValueError("Missing 'email' in request body")
+
+        subject = "Crisis Summary Report for " + datetime.now().strftime("%I:%M%p on %B %d, %Y")
+
+        # In our provider design, we pass 'data' as the crisis payload used by email_client.prettyPrintReport
+        payload = {
+            "email": emailadd,
+            "subject": subject,
+            "data": data,  # full crisis data dict
+        }
+
+        provider = PROVIDERS["email_report"]
+        ok = provider.send(payload)
+
+        if not ok:
+            raise RuntimeError("ReportEmailProvider failed to send email report")
+
+        json_response = {"result": "Success!", "sent_to": emailadd}
+        return Response(json.dumps(json_response), status=201, mimetype="application/json")
+
+    except Exception as e:
+        traceback.print_exc()
+        error_response = {"result": "Failure", "error": str(e)}
+        return Response(json.dumps(error_response), status=500, mimetype="application/json")
+
 
 if __name__ == '__main__':
     import os
