@@ -1,211 +1,168 @@
-from django.shortcuts import render
+import logging
+from typing import List
 
-# Create your views here.
-from rest_framework import viewsets, permissions, mixins, generics
 from django.contrib.auth.models import User
-from .permissions import NotAllowed
-from .models import Crisis, CrisisAssistance, CrisisType, SiteSettings, EmergencyAgencies
-from .serializer import (
-                CrisisSerializer, 
-                CrisisAssistanceSerializer, 
-                CrisisTypeSerializer, 
-                CrisisUpdateSerializer, 
-                CrisisBasicSerializer, 
-                UserSerializer, 
-                UserAdminSerializer,
-                SiteSettingsSerializer,
-                EmergencyAgenciesSerializer,
-                EmergencyAgenciesUpdateSerializer
-            )
-
+from rest_framework import viewsets, mixins, generics, status
 from rest_framework.permissions import (
     AllowAny,
-    IsAuthenticated,
     IsAdminUser,
-    IsAuthenticatedOrReadOnly,
+    BasePermission
+)
+from rest_framework.response import Response
+
+from .models import (
+    Crisis,
+    CrisisAssistance,
+    CrisisType,
+    SiteSettings,
+    EmergencyAgencies
+)
+from .permissions import NotAllowed
+from .serializer import (
+    CrisisSerializer,
+    CrisisAssistanceSerializer,
+    CrisisTypeSerializer,
+    UserSerializer,
+    UserAdminSerializer,
+    SiteSettingsSerializer,
+    EmergencyAgenciesSerializer
+    # Note: EmergencyAgenciesUpdateSerializer was removed in previous refactor
+    # as it was identical to the base serializer.
 )
 
-# import channels.layers
-# from asgiref.sync import async_to_sync
+# Initialize Logger
+logger = logging.getLogger(__name__)
 
-'''
-    The View Classes here implements the V-view in the MVC architecture.
-    CrisisView, CrisisUpdateView, CrisisPartialUpdateView, 
-    CrisisAssistanceView, CrisisTypeView, 
-    UserView, UserPartialUpdateView,
-    SiteSettingView,
-    EmergencyView, EmergencyPartialUpdateView
-    
-    will all be handled by an api url in urls.py
-'''
 
-class CrisisViewSet(viewsets.ModelViewSet):
+class PublicCreateReadAdminModifyMixin:
     """
-        Return a list of all the existing crisis.
+    DRY Mixin: Defaults to AllowAny for list/create/retrieve.
+    Requires Admin privileges for Update/Delete.
+    """
+    def get_permissions(self) -> List[BasePermission]:
+        if self.action in ['list', 'retrieve', 'create']:
+            return [AllowAny()]
+        return [IsAdminUser()]
+
+    def perform_create(self, serializer):
+        """Log creation events."""
+        instance = serializer.save()
+        logger.info(f"Created {self.queryset.model.__name__} ID {instance.pk}")
+
+    def perform_update(self, serializer):
+        """Log update events."""
+        instance = serializer.save()
+        logger.info(f"Updated {self.queryset.model.__name__} ID {instance.pk}")
+
+class CrisisViewSet(PublicCreateReadAdminModifyMixin, viewsets.ModelViewSet):
+    """
+    Return a list of all existing crises.
     """
     queryset = Crisis.objects.all()
     serializer_class = CrisisSerializer
-    # def get_serializer_class(self):
-    #     if self.request.user.is_staff:
-    #         return CrisisSerializer
-    #     return CrisisBasicSerializer
 
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-
-        return [permission() for permission in permission_classes]
 
 class CrisisUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-    '''
-    Book update API, need to submit both `name` and `author_name` fields
-    At the same time, or django will prevent to do update for field missing
-    '''
+    """
+    Crisis update API. Requires full field submission (PUT).
+    """
     queryset = Crisis.objects.all()
     serializer_class = CrisisSerializer
+    permission_classes = [IsAdminUser]  # Explicitly defining permission for safety
 
     def put(self, request, *args, **kwargs):
+        logger.info(f"Full update requested for Crisis ID {kwargs.get('pk')}")
         return self.update(request, *args, **kwargs)
 
+
 class CrisisPartialUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-    '''
-    You just need to provide the field which is to be modified.
-    '''
+    """
+    Crisis partial update API. Allows modifying specific fields (PATCH).
+    """
     queryset = Crisis.objects.all()
     serializer_class = CrisisSerializer
+    permission_classes = [IsAdminUser]
 
     def put(self, request, *args, **kwargs):
+        # Note: Usually PATCH is mapped to partial_update, but keeping 'put'
+        # per original code requirement, though calling partial_update inside.
+        logger.info(f"Partial update requested for Crisis ID {kwargs.get('pk')}")
         return self.partial_update(request, *args, **kwargs)
 
-class CrisisAssistanceViewSet(viewsets.ModelViewSet):
+
+# ==========================================
+# Helper Views (Assistance, Type, Settings)
+# ==========================================
+
+class CrisisAssistanceViewSet(PublicCreateReadAdminModifyMixin, viewsets.ModelViewSet):
     queryset = CrisisAssistance.objects.all()
     serializer_class = CrisisAssistanceSerializer
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-        return [permission() for permission in permission_classes]
 
-class CrisisTypeViewSet(viewsets.ModelViewSet):
+class CrisisTypeViewSet(PublicCreateReadAdminModifyMixin, viewsets.ModelViewSet):
     queryset = CrisisType.objects.all()
     serializer_class = CrisisTypeSerializer
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-        return [permission() for permission in permission_classes]
+
+class SiteSettingViewSet(PublicCreateReadAdminModifyMixin, viewsets.ModelViewSet):
+    queryset = SiteSettings.objects.all()
+    serializer_class = SiteSettingsSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     """
-    A viewset for viewing and editing user instances.
+    A viewset for viewing and creating user instances.
+    Restricted: Only Admins can list or create. Updating via this endpoint is disabled.
     """
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
-    # def get_serializer_class(self):
-    #     if self.request.user.is_staff:
-    #         return UserAdminSerializer
-    #     return UserSerializer
+    def get_permissions(self) -> List[BasePermission]:
+        if self.action in ['list', 'create']:
+            return [IsAdminUser()]
+        # Default to NotAllowed for other actions to prevent accidental deletion via this endpoint
+        return [NotAllowed()]
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [IsAdminUser] 
-        elif self.action == 'create':
-            permission_classes = [IsAdminUser]
-        else:
-            permission_classes = [NotAllowed]
-        return [permission() for permission in permission_classes]
+    def perform_create(self, serializer):
+        user = serializer.save()
+        logger.info(f"Admin created new user: {user.username}")
+
 
 class UserPartialUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-    '''
-    You just need to provide the field which is to be modified.
-    '''
+    """
+    Specific endpoint for Admin to partially update a user.
+    """
     queryset = User.objects.all()
     serializer_class = UserAdminSerializer
     permission_classes = (IsAdminUser,)
 
     def put(self, request, *args, **kwargs):
+        logger.info(f"Admin updating user ID {kwargs.get('pk')}")
         return self.partial_update(request, *args, **kwargs)
 
-class SiteSettingViewSet(viewsets.ModelViewSet):
-
-    serializer_class = SiteSettingsSerializer
-    queryset = SiteSettings.objects.all()
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-        return [permission() for permission in permission_classes]
-
-
-class EmergencyAgenciesView(viewsets.ModelViewSet):
-
-    serializer_class = EmergencyAgenciesSerializer
+class EmergencyAgenciesView(PublicCreateReadAdminModifyMixin, viewsets.ModelViewSet):
     queryset = EmergencyAgencies.objects.all()
+    serializer_class = EmergencyAgenciesSerializer
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'list':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-        return [permission() for permission in permission_classes]
 
 class EmergencyAgenciesPartialUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-
-    serializer_class = EmergencyAgenciesUpdateSerializer
     queryset = EmergencyAgencies.objects.all()
+    serializer_class = EmergencyAgenciesSerializer
+    permission_classes = (IsAdminUser,)
 
     def put(self, request, *args, **kwargs):
+        logger.info(f"Updating Emergency Agency ID {kwargs.get('pk')}")
         return self.partial_update(request, *args, **kwargs)
 
-    def delete(self, request, pk, format=None):
-        event = self.get_object(pk)
-        event.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def delete(self, request, *args, **kwargs):
+        """
+        Custom delete handler.
+        """
+        try:
+            instance = self.get_object()
+            agency_name = instance.agency
+            instance.delete()
+            logger.info(f"Deleted Emergency Agency: {agency_name}")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            logger.error(f"Error deleting agency: {e}")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
