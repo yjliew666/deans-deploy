@@ -1,88 +1,122 @@
+from django_cron import CronJobBase, Schedule
+from .models import Crisis, SiteSettings
+import datetime
+import requests
+from django.template.loader import get_template
+from django.template import Context
+# --- REENGINEERING CHANGE 1: Import Django Settings ---
+from django.conf import settings
+# ------------------------------------------------------
 
-"""Gevent based crontab implementation"""
-# Reference https://stackoverflow.com/a/2946908/5341800
-# © Hackeron
-from datetime import datetime, timedelta
-import gevent
+import logging
+logger = logging.getLogger("django")
 
-# Some utility classes / functions first
-def conv_to_set(obj):
-    """Converts to set allowing single integer to be provided"""
+email_template = get_template('president_email.html')
 
-    if isinstance(obj, (int, )):
-        return set([obj])  # Single item
-    if not isinstance(obj, set):
-        obj = set(obj)
-    return obj
+def construct_report_data():
+    payload = {}
+    # d = Context({ 'username': username 
+    # [cite: 43] })
+    # html_content = htmly.render(d)
 
-class AllMatch(set):
-    """Universal set - match everything"""
-    def __contains__(self, item): 
-        return True
+    created_time = datetime.datetime.now() - datetime.timedelta(minutes=30) # crisis created since 30 mins ago
+    new_crisis = Crisis.objects.filter(crisis_time__gte=created_time)
+    recent_resolved_crisis = Crisis.objects.filter(updated_at__gte=created_time, crisis_status="RS")
+    active_crisis = Crisis.objects.exclude(crisis_status="RS")
 
-allMatch = AllMatch()
 
-class Event(object):
-    """The Actual Event Class"""
+    # logger.info("Reporting" + str(len(latest_crisis))+ "crisis.")
+    payload['email'] = "deanscms@gmail.com" # SiteSettings.load().summary_reporting_email
+    payload['new_crisis'] = []
+    payload['recent_resolved_crisis'] = []
+    payload['active_crisis'] = []
+    for i in new_crisis:
+        payload['new_crisis'].append(
+          
+            {
+            "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
+            "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
+            "location": i.crisis_location1,
+            "location2": i.crisis_location2,
+            "type": ", ".join([j.name for j in i.crisis_type.all()]),
+            "status": i.crisis_status,
+       
+            "crisis_description": i.crisis_description,
+            "crisis_assistance": ", ".join([j.name for j in i.crisis_assistance.all()]),
+            "assistance_description": i.crisis_assistance_description
+        }
+        )
+    for i in recent_resolved_crisis:
+        payload['recent_resolved_crisis'].append(
+            {
+            "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
+      
+            "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
+            "location": i.crisis_location1,
+            "location2": i.crisis_location2,
+            "type": ", ".join([j.name for j in i.crisis_type.all()]),
+            "status": i.crisis_status,
+            "crisis_description": i.crisis_description,
+            "crisis_assistance": ", ".join([j.name for 
+j in i.crisis_assistance.all()]),
+            "assistance_description": i.crisis_assistance_description
+        }
+        )
+    for i in active_crisis:
+        payload['active_crisis'].append(
+            {
+            "crisis_time":i.crisis_time.strftime("%Y-%m-%d %H:%M:%S"), 
+            "resolved_by": i.updated_at.strftime("%Y-%m-%d %H:%M:%S") if i.crisis_status == "RS" else "None",
+        
+            "location": i.crisis_location1,
+            "location2": i.crisis_location2,
+            "type": ", ".join([j.name for j in i.crisis_type.all()]),
+            "status": i.crisis_status,
+            "crisis_description": i.crisis_description,
+            "crisis_assistance": ", ".join([j.name for j in i.crisis_assistance.all()]),
+            "assistance_description": i.crisis_assistance_description
+       
+            }
+        )
+    return payload
 
-    def __init__(self, action, minute=allMatch, hour=allMatch, 
-                       day=allMatch, month=allMatch, daysofweek=allMatch, 
-                       args=(), kwargs={}):
-        self.mins = conv_to_set(minute)
-        self.hours = conv_to_set(hour)
-        self.days = conv_to_set(day)
-        self.months = conv_to_set(month)
-        self.daysofweek = conv_to_set(daysofweek)
-        self.action = action
-        self.args = args
-        self.kwargs = kwargs
+class CronEmail(CronJobBase):
+    RUN_EVERY_MINS = 1
+    ALLOW_PARALLEL_RUNS = True
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'api.CronEmail'
+    print("CRON JOB!!!!!!!")
+    def do(self):
+        print("Doing")
+        # --- REENGINEERING CHANGE 2: Decouple Notification URL ---
+        # Replace hardcoded URL string with the settings variable
+        # Note: We must append the /reports/ endpoint to the base URL
+        url = f"{settings.NOTIFICATION_SERVICE_URL}/reports/"
+        # --------------------------------------------------------
+        payload = construct_report_data()
+        print("payload", payload)
+        headers = {'Content-Type': "application/json"}
+   
+        print("Before sending")
+        response = requests.request("POST", url, json=payload, headers=headers)
+        print("Sent request")
+        # logger.info(response.text)
+        logger.info('Sent email to President Office.')
 
-    def matchtime(self, t1):
-        """Return True if this event should trigger at the specified datetime"""
-        return ((t1.minute     in self.mins) and
-                (t1.hour       in self.hours) and
-                (t1.day        in self.days) and
-                (t1.month      in self.months) and
-                (t1.weekday()  in self.daysofweek))
 
-    def check(self, t):
-        """Check and run action if needed"""
-
-        if self.matchtime(t):
-            self.action(*self.args, **self.kwargs)
-
-class CronTab(object):
-    """The crontab implementation"""
-
-    def __init__(self, *events):
-        self.events = events
-
-    def _check(self):
-        """Check all events in separate greenlets"""
-
-        t1 = datetime(*datetime.now().timetuple()[:5])
-        for event in self.events:
-            gevent.spawn(event.check, t1)
-
-        t1 += timedelta(minutes=1)
-        s1 = (t1 - datetime.now()).seconds + 1
-        print("Checking again in %s seconds" % s1)
-        job = gevent.spawn_later(s1, self._check)
-
-    def run(self):
-        """Run the cron forever"""
-
-        self._check()
-        while True:
-            gevent.sleep(60)
-
-import os 
-def email_task():
-    """Just an example that sends a bell and asd to all terminals"""
-    # os.system('date; echo nice;')
-    os.system('date; manage.py runcrons  >> /var/log/cron.log')  
-
-cron = CronTab(
-  Event(email_task, range(0, 60, 2) ),
-)
-cron.run()
+# class CronSocialMedia(CronJobBase):
+#     RUN_EVERY_MINS = 1
+#     ALLOW_PARALLEL_RUNS = True
+#     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+#     code = 'api.CronSocialMedia'
+#     def do(self):
+#         # --- REENGINEERING CHANGE 3: Decouple Social Media URL (conceptual) ---
+#         # We apply the same logic here to decouple the second hardcoded URL
+#         url = f"{settings.NOTIFICATION_SERVICE_URL}/socialmessages/"
+#         # --------------------------------------------------------------------
+#         payload = construct_report_data()
+#         headers = {'Content-Type': "application/json"}
+#         response = requests.request("POST", url, json=payload, headers=headers)
+#         # logger.info(response.text)
+#         logger.info('Sent message to social medias.')
+```eof
