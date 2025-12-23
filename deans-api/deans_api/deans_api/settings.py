@@ -19,8 +19,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
+# --- REENGINEERING CHANGE 1: DECOUPLE SECRET KEY ---
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '%9mbpu5w!1c$-5xz9v@n03x$0=jzc5wrjlujh1wu*p&sb09iu$'
+# Read from environment variable DJANGO_SECRET_KEY, falling back to a dummy value 
+# only if running locally and the variable is missing (SHOULD NOT HAPPEN with .env).
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'insecure-fallback-for-tests') 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if('PRODUCTION' in os.environ and os.environ['PRODUCTION']=='1'):
@@ -104,14 +107,13 @@ if('IN_DOCKER' in os.environ and os.environ['IN_DOCKER']=='1'):
     DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
+        # --- REENGINEERING CHANGE 2: DECOUPLE DATABASE CREDENTIALS ---
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        # -------------------------------------------------------------
         'HOST': 'db',
         'PORT': 5432,
-        'OPTIONS': {
-            'options': '-c timezone=UTC',
-        }
     },
 }
 else:
@@ -157,8 +159,8 @@ REST_AUTH_SERIALIZERS = {
 }
 if('PRODUCTION' in os.environ and os.environ['PRODUCTION']=='1'):
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] =  (
-         'rest_framework.renderers.JSONRenderer',
-     )
+           'rest_framework.renderers.JSONRenderer',
+       )
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = (
@@ -185,3 +187,9 @@ USE_TZ = True
 
 STATIC_URL = '/static-django/'
 STATIC_ROOT = '/static-django/'
+
+# --- REENGINEERING CHANGE 3: DECOUPLE NOTIFICATION SERVICE URL ---
+# The Core API uses this setting to communicate with the decoupled Notification Service.
+# Reads from environment variable NOTIFICATION_SERVICE_URL.
+NOTIFICATION_SERVICE_URL = os.environ.get('NOTIFICATION_SERVICE_URL')
+# -----------------------------------------------------------------
