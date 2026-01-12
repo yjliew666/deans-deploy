@@ -14,6 +14,7 @@ from .views import (
     EmergencyAgenciesPartialUpdateView,
     SiteSettingViewSet
 )
+from .health import health_check, readiness_check
 
 # Initialize Logger
 logger = logging.getLogger(__name__)
@@ -67,4 +68,7 @@ urlpatterns = [
         EmergencyAgenciesPartialUpdateView.as_view(), 
         name='emergencyagency_partial_update'
     ),
+    # New Health Check Endpoints (Converted to path)
+    path('health/', health_check, name='health_check'),
+    path('ready/', readiness_check, name='readiness_check'),
 ]

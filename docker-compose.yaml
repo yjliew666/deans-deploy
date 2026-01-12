@@ -73,8 +73,8 @@ services:
     image: notification_image
     entrypoint: "start_server.sh"
     # command: "python -c \"while True: pass\""
-    # ports:
-    #   - "8000:3000"
+    ports:
+      - "8001:8000"
     # REENGINEERING CHANGE 2: Use .env for consistency (e.g., API keys for social media)
     env_file:
       - default.env
@@ -83,6 +83,18 @@ services:
       - ./deans-notification:/work
     networks:
       - notification_network
+
+  frontend:
+    build: ./deans-frontend
+    image: frontend_image
+    networks:
+      # - frontend_network
+      - nginx_network
+    ports:
+      - 3000:3000
+    volumes:
+      - ./deans-frontend:/work/
+    command: yarn start
 
   # frontend:
   #   build:

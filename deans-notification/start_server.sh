@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-cd $FLASK_ROOT
+cd /work
 python message_manager.py;
