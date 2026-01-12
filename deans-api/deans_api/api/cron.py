@@ -8,11 +8,15 @@ from django.utils import timezone
 from django_cron import CronJobBase, Schedule
 from .models import Crisis
 
+# --- REENGINEERING CHANGE 1: Import Django Settings ---
+from django.conf import settings
+# ------------------------------------------------------
+
 # Get the logger instance
 logger = logging.getLogger(__name__)
 
 # Configuration Constants
-NOTIFICATION_URL = "http://notification:8000/reports/"
+NOTIFICATION_URL = f"{settings.NOTIFICATION_SERVICE_URL}/reports/"
 DEFAULT_REPORT_EMAIL = "deanscms@gmail.com"
 REQUEST_TIMEOUT = 10  # seconds
 
@@ -107,3 +111,19 @@ class CronEmail(CronJobBase):
     except Exception as e:
       # Catches generic Python errors (e.g., database serialization issues)
       logger.exception(f"Unexpected error in {self.code}: {str(e)}")
+
+# class CronSocialMedia(CronJobBase):
+#     RUN_EVERY_MINS = 1
+#     ALLOW_PARALLEL_RUNS = True
+#     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+#     code = 'api.CronSocialMedia'
+#     def do(self):
+#         # --- REENGINEERING CHANGE 3: Decouple Social Media URL (conceptual) ---
+#         # We apply the same logic here to decouple the second hardcoded URL
+#         url = f"{settings.NOTIFICATION_SERVICE_URL}/socialmessages/"
+#         # --------------------------------------------------------------------
+#         payload = construct_report_data()
+#         headers = {'Content-Type': "application/json"}
+#         response = requests.request("POST", url, json=payload, headers=headers)
+#         # logger.info(response.text)
+#         logger.info('Sent message to social medias.')

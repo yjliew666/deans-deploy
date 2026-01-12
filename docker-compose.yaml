@@ -18,40 +18,73 @@ services:
     image: postgres:9.6
     ports:
       - "5432:5432"
+    # --- REENGINEERING CHANGE 1: FIX DB INITIALIZATION & DECOUPLE CREDENTIALS ---
+    # This block uses variables from the root .env file to configure the DB.
+    # This resolves the "Database is uninitialized, and superuser password is not specified" error.
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    # ---------------------------------------------------------------------------
+    # REENGINEERING CHANGE 2: Use .env for consistency across all services
     env_file:
       - default.env
-    networks: 
+      - .env
+    networks:  
       - db_network
-    environment:
-      POSTGRES_PASSWORD: password
-      TZ: UTC
+
   redis:
     image: redis:7-alpine
     command: redis-server
     ports:
       - "6379:6379"
-    networks: 
+    # REENGINEERING CHANGE 2: Use .env for consistency
+    env_file:
+      - default.env
+      - .env
+    networks:  
       - redis_network
+
   web:
     build:
       context: ./deans-api
     image: django_image
     entrypoint: "start_django.sh"
+    # REENGINEERING CHANGE 2: Use .env for secure secret injection (DJANGO_SECRET_KEY, NOTIFICATION_SERVICE_URL)
     env_file:
       - default.env
+      - .env
     volumes:
       - ./deans-api/data:/data
       - ./deans-api/deans_api:/work/deans-api/deans_api
       - static_volume:/static-django
     depends_on:
       - db
-      # - redis
-    networks: 
+      - redis
+    networks:  
       - db_network
       - nginx_network
       - notification_network
       - redis_network
-  # notification:
+
+  notification:
+    build:
+      context: ./deans-notification
+    image: notification_image
+    entrypoint: "start_server.sh"
+    # command: "python -c \"while True: pass\""
+    # ports:
+    #   - "8000:3000"
+    # REENGINEERING CHANGE 2: Use .env for consistency (e.g., API keys for social media)
+    env_file:
+      - default.env
+      - .env
+    volumes:
+      - ./deans-notification:/work
+    networks:
+      - notification_network
+
+  # frontend:
   #   build:
   #     context: ./deans-notification
   #   image: notification_image
@@ -64,18 +97,10 @@ services:
   #   volumes:
   #     - ./deans-notification:/work
   #   networks:
-  #     - notification_network
-  frontend:
-    build: ./deans-frontend
-    image: frontend_image
-    networks:
-      # - frontend_network
-      - nginx_network
-    ports:
-      - 3000:3000
-    volumes:
-      - ./deans-frontend:/work/
-    command: yarn start
+  #     - frontend_network
+  #   ports:
+  #     - 3000:3000
+
   nginx:
     build:
       context: ./nginx
@@ -85,19 +110,24 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - static_volume:/static-django
+    # REENGINEERING CHANGE 2: Use .env for consistency
     env_file:
       - default.env
+      - .env
     depends_on:
       - web
       # - frontend
       # - node
     networks:
       - nginx_network
+
   cron:
     image: django_image
     command: bash -c "python3 /cron/cron.py"
+    # REENGINEERING CHANGE 2: Use .env for consistency (Cron jobs may need API keys or DB credentials)
     env_file:
       - default.env
+      - .env
     volumes:
       - ./cron:/cron
       - ./deans-api/deans_api:/work/deans-api/deans_api
@@ -111,18 +141,16 @@ volumes:
   static_volume:
 
 
-
-
-      # node:
+  # node:
   #   build: ./deans-frontend
   #   ports:
   #   - "3000:3000"
   #   expose:
   #     - 3000
   #   volumes:
-  #    - ./deans-frontend:/work/
+  #     - ./deans-frontend:/work/
   #   ports:
   #     - "3000"
   #   command: bash -c "yarn install; yarn start"
-  #   networks: 
+  #   networks:  
   #     - nginx_network
