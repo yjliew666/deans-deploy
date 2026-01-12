@@ -1,3 +1,5 @@
+@import "../../styles/breakpoints.scss";
+
 :local {
   .container {
     display: flex;
@@ -36,5 +38,58 @@
 
   .table {
     margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  :local {
+    .container {
+      flex-direction: column;
+      padding: 0.75rem;
+    }
+
+    .left {
+      order: 2;
+      margin-right: 0;
+      margin-top: 0.5rem;
+      max-height: 40vh;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+
+    .right {
+      order: 1;
+      padding-right: 0;
+      padding-top: 0;
+    }
+
+    .header {
+      font-size: 1.25rem;
+    }
+
+    .map {
+      margin-top: 1rem;
+      height: auto;
+    }
+
+    .status {
+      position: relative;
+      top: auto;
+      margin-top: 1rem;
+    }
+
+    .table {
+      margin-top: 1rem;
+    }
+  }
+
+  :global {
+    .ant-card {
+      margin-bottom: 12px;
+    }
+
+    .ant-table {
+      font-size: 13px;
+    }
   }
 }

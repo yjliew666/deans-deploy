@@ -1,3 +1,5 @@
+@import "../../styles/breakpoints";
+
 :local {
   .container {
     display: flex;
@@ -39,5 +41,21 @@
     }
     margin-right: 2rem;
     font-size: 1rem;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .left {
+    .item {
+      &.brand, &:nth-child(n+3) {
+        display: none;
+      }
+    }
+  }
+  .right {
+    display: none;
+  }
+  .logo {
+    height: 34px;
   }
 }

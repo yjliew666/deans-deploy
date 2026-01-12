@@ -1,3 +1,5 @@
+@import "../../../styles/breakpoints.scss";
+
 :local {
   .tagContainer {
     margin: 1rem 0;
@@ -40,5 +42,32 @@
 
   .summaryReportingEmailContainer {
     margin-top: 1rem;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  :local {
+    .subHeader {
+      flex-direction: column;
+      margin-top: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .tagContainer {
+      margin: 0.75rem 0;
+    }
+
+    .socialMediaAccountContainer {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+
+    .emergencyAgenciesContainer {
+      margin-top: 0.75rem;
+    }
+
+    .summaryReportingEmailContainer {
+      margin-top: 0.75rem;
+    }
   }
 }

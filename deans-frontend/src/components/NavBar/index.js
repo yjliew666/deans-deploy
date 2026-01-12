@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import { getCurrentUser, userLogout } from "@redux/actions";
 import { Link } from "react-router-dom";
 import logo from "@assets/logo.png";
+import MobileNav from "../MobileNavBar";
 
 import * as styles from "./style.scss";
 
@@ -17,6 +18,7 @@ class NavBar extends React.Component {
     const { currentUser } = this.props;
     return (
       <div className={styles.container}>
+        <MobileNav />
         <div className={styles.left}>
           <div className={styles.item}>
             <Link to="/">

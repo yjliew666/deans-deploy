@@ -5,3 +5,19 @@
     }
   }
 }
+
+@media (max-width: $breakpoint-md) {
+  :global {
+    .ant-table {
+      font-size: 12px;
+    }
+
+    .ant-table td {
+      padding: 8px 4px !important;
+    }
+
+    .ant-table th {
+      padding: 8px 4px !important;
+    }
+  }
+}

@@ -1,3 +1,4 @@
+@import "./breakpoints";
 // Add your global style here
 :global {
   .gm-style:first-of-type > div:nth-child(1) {
@@ -14,6 +15,40 @@
   }
 
   body {
-    min-width: 1024px;
+    min-width: 320px;
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+  }
+
+  .sidebar {
+    transition: all 0.25s ease;
+  }
+
+  .sidebar-collapsed {
+    display: none;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    .ant-btn {
+      width: 100% !important;
+    }
+    .ant-form-item-control-wrapper {
+      width: 100% !important;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  :global {
+    .sidebar {
+      display: none !important;
+    }
+    .mobile-only {
+      display: block !important;
+    }
+    .content {
+      padding-left: 0 !important;
+    }
   }
 }

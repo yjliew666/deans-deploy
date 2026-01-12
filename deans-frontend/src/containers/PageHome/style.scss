@@ -1,3 +1,5 @@
+@import "../../styles/breakpoints.scss";
+
 :local {
   .container {
     display: flex;
@@ -55,5 +57,48 @@
 
   .activeCrisisListTable {
     margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  :local {
+    .container {
+      flex-direction: column;
+      padding: 0.75rem;
+    }
+
+    .left {
+      margin-right: 0;
+      margin-top: 0;
+      order: 2;
+    }
+
+    .right {
+      padding-right: 0;
+      order: 1;
+    }
+
+    .map {
+      height: 18rem;
+      margin-top: 0.5rem;
+    }
+
+    .status {
+      position: relative;
+      top: auto;
+      margin-top: 1rem;
+    }
+
+    .activeCrisisListTableContainer {
+      margin-top: 1rem;
+    }
+
+    .subHeader {
+      font-size: 1rem;
+    }
+
+    .activeCrisisListTable {
+      margin-top: 0.75rem;
+    }
   }
 }

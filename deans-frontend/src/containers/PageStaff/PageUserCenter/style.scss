@@ -1,3 +1,5 @@
+@import "../../../styles/breakpoints";
+
 :local {
   .subHeader {
     margin-top: 2rem;
@@ -11,5 +13,18 @@
   .userTable {
     width: 100%;
     margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  :local {
+    .userTable {
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+  }
+
+  :local(.userTable) :global(.ant-table) {
+    min-width: 365px !important;
   }
 }

@@ -1,0 +1,21 @@
+@import "../../styles/breakpoints.scss";
+
+.container {
+    display: none !important;
+    .nav {
+        border-radius: 4px !important;
+    }
+
+    .ant-drawer-body {
+        padding: 0;
+    }
+}
+
+@media (max-width: $breakpoint-md) {
+    .container {
+        display: block !important;
+        .nav {
+        display: inline-block !important;
+        }
+    }
+}
