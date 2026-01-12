@@ -74,7 +74,7 @@ services:
     entrypoint: "start_server.sh"
     # command: "python -c \"while True: pass\""
     ports:
-      - "8001:8000"
+      - "4455:4455"
     # REENGINEERING CHANGE 2: Use .env for consistency (e.g., API keys for social media)
     env_file:
       - default.env

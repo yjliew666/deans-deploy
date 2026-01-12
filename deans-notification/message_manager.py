@@ -353,6 +353,6 @@ if __name__ == '__main__':
     import os
     if('IN_DOCKER' in os.environ and os.environ['IN_DOCKER']=='1'):
         DEBUG = not ('PRODUCTION' in os.environ and os.environ['PRODUCTION']=='1')
-        app.run(host='0.0.0.0', port=8000, debug=DEBUG)
+        app.run(host='0.0.0.0', port=4455, debug=DEBUG)
     else:
-         app.run(host='127.0.0.1', port=8000, debug=True)
+         app.run(host='127.0.0.1', port=4455, debug=True)

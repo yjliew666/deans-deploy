@@ -1,10 +1,10 @@
 import os
-from pyreportjasper import JasperPy
+from pyreportjasper import PyReportJasper
 
 def compiling():
     template = os.path.dirname(os.path.abspath(__file__)) + \
                  '/jasper/crisis_report_template.jrxml'
-    jasper = JasperPy()
+    jasper = PyReportJasper()
     jasper.compile(template)
 
 def json_to_pdf(report_count):
@@ -17,7 +17,7 @@ def json_to_pdf(report_count):
     data_file = os.path.dirname(os.path.abspath(__file__)) + \
         '/json_summary/json'+str(report_count)+'.json'
 
-    jasper = JasperPy()
+    jasper = PyReportJasper()
     jasper.process(
         template,
         output_file=output,
