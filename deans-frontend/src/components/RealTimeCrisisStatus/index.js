@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Icon } from "antd";
+import InfoCard from "@components/InfoCard"
 import * as styles from "./style.scss";
 
 const RealTimeCrisisStatus = props => {
@@ -9,24 +10,24 @@ const RealTimeCrisisStatus = props => {
   const num =
     crises && crises.filter(crisis => crisis.crisis_status === "DP").length;
   return (
-    <div className={styles.container}>
+    <InfoCard>
       <div>
         <strong>Crisis Overview</strong>
       </div>
       <div>
         Active crisis: <strong>{num}</strong>
       </div>
-      <div className={styles.internet}>
+      <div>
         Internet Status:
-        <Icon
+        <Icon 
           type="check-circle"
           theme="twoTone"
           twoToneColor="#52c41a"
-          style={{ marginLeft: "0.5rem" }}
-        />{" "}
+          className={styles.internet}
+        />
         Online
       </div>
-    </div>
+    </InfoCard>
   );
 };
 

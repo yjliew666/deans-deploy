@@ -1,13 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-// import { Icon } from "antd";
-import * as styles from "./style.scss";
+import InfoCard from "@components/InfoCard"
 
 const RealTimeWeather = props => {
   const { temperature, humidity, rainfall } = props;
   return (
-    <div className={styles.container}>
+    <InfoCard>
       <div>
         <strong>Weather Overview</strong>
       </div>
@@ -20,7 +19,7 @@ const RealTimeWeather = props => {
       <div>
         Rainfall: <strong>{rainfall + "mm"}</strong>
       </div>
-    </div>
+    </InfoCard>
   );
 };
 

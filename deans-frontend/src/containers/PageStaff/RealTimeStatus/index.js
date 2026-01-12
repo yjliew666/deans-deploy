@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Icon } from "antd";
+import InfoCard from "@components/InfoCard";
 import * as styles from "./style.scss";
 
 const RealTimeStatus = props => (
-  <div className={styles.container}>
+  <InfoCard>
     <div>
       <strong>Crisis Overview</strong>
     </div>
@@ -17,17 +18,17 @@ const RealTimeStatus = props => (
     <div>
       <strong>{props.numOfDispatched}</strong> Dispatched
     </div>
-    <div className={styles.internet}>
+    <div>
       Internet Status:
       <Icon
         type="check-circle"
         theme="twoTone"
         twoToneColor="#52c41a"
-        style={{ marginLeft: "0.5rem" }}
-      />{" "}
+        className={styles.internet}
+      />
       Online
     </div>
-  </div>
+  </InfoCard>
 );
 
 RealTimeStatus.propTypes = {

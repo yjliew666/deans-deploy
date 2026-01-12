@@ -1,8 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-// import { Icon } from "antd";
-import * as styles from "./style.scss";
+import InfoCard from "@components/InfoCard"
 
 const RealTimePSI = props => {
   const { psi } = props;
@@ -10,7 +9,7 @@ const RealTimePSI = props => {
   const hourly = psi && psi.hourly;
   const { national, west, east, central, south, north } = hourly || {};
   return (
-    <div className={styles.container}>
+    <InfoCard>
       <div>
         <strong>Pollution Overview</strong>
       </div>
@@ -41,17 +40,7 @@ const RealTimePSI = props => {
       <div>
         Central: <strong>{central}</strong>
       </div>
-      {/* <div className={styles.internet}>
-        Internet Status:
-        <Icon
-          type="check-circle"
-          theme="twoTone"
-          twoToneColor="#52c41a"
-          style={{ marginLeft: "0.5rem" }}
-        />{" "}
-        Online
-      </div> */}
-    </div>
+    </InfoCard>
   );
 };
 
