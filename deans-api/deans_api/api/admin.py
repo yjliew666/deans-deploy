@@ -1,24 +1,46 @@
+import logging
 from django.contrib import admin
 from .models import (
-        Operator,
-        Crisis,
-        CrisisType,
-        CrisisAssistance,
-        SiteSettings,
-        EmergencyAgencies,
-        SocialMediaAccount
-        )
+    Operator,
+    Crisis,
+    CrisisType,
+    CrisisAssistance,
+    SiteSettings,
+    EmergencyAgencies,
+    SocialMediaAccount
+)
 
-admin.site.register(Operator)
-'''
-    Call the django default admin page to handel the models we have in admin panel
-'''
+# Initialize Logger
+logger = logging.getLogger(__name__)
+
 class CrisisAdmin(admin.ModelAdmin):
-    list_display = ('crisis_id', 'crisis_description','crisis_time','visible')
+    """
+    Custom Admin View for Crisis model.
+    Enables visibility toggling directly from the list view.
+    """
+    list_display = ('crisis_id', 'crisis_description', 'crisis_time', 'visible')
     list_editable = ('visible',)
-admin.site.register(Crisis, CrisisAdmin)
-admin.site.register(CrisisType)
-admin.site.register(CrisisAssistance)
-admin.site.register(SiteSettings)
-admin.site.register(EmergencyAgencies)
-admin.site.register(SocialMediaAccount)
+
+# Register Crisis with its custom admin class
+try:
+    admin.site.register(Crisis, CrisisAdmin)
+    logger.info("Registered Crisis model with custom CrisisAdmin.")
+except Exception as e:
+    logger.error(f"Failed to register Crisis admin: {e}")
+
+# Register standard models in bulk to reduce repetition
+models_to_register = [
+    Operator,
+    CrisisType,
+    CrisisAssistance,
+    SiteSettings,
+    EmergencyAgencies,
+    SocialMediaAccount
+]
+
+# Register remaining models
+try:
+    admin.site.register(models_to_register)
+    logger.info(f"Registered models: {[m.__name__ for m in models_to_register]}")
+except Exception as e:
+    logger.error(f"Failed to register standard models: {e}")
