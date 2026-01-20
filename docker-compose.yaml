@@ -9,8 +9,6 @@ networks:
     driver: bridge
   redis_network:
     driver: bridge
-  # frontend_network:
-  #   driver: bridge
 
 
 services:
@@ -36,7 +34,7 @@ services:
     build:
       context: ./deans-api
     image: django_image
-    entrypoint: "start_django.sh"
+    entrypoint: "sh start_django.sh"
     env_file:
       - default.env
     volumes:
@@ -51,20 +49,6 @@ services:
       - nginx_network
       - notification_network
       - redis_network
-  # notification:
-  #   build:
-  #     context: ./deans-notification
-  #   image: notification_image
-  #   entrypoint: "start_server.sh"
-  #   # command: "python -c \"while True: pass\""
-  #   # ports:
-  #   #   - "8000:3000"
-  #   env_file:
-  #     - default.env
-  #   volumes:
-  #     - ./deans-notification:/work
-  #   networks:
-  #     - notification_network
   frontend:
     build: ./deans-frontend
     image: frontend_image
@@ -75,6 +59,7 @@ services:
       - 3000:3000
     volumes:
       - ./deans-frontend:/work/
+      - /work/node_modules
     command: yarn start
   nginx:
     build:
@@ -93,36 +78,6 @@ services:
       # - node
     networks:
       - nginx_network
-  cron:
-    image: django_image
-    command: bash -c "python3 /cron/cron.py"
-    env_file:
-      - default.env
-    volumes:
-      - ./cron:/cron
-      - ./deans-api/deans_api:/work/deans-api/deans_api
-    depends_on:
-      - web
-    networks:
-      - notification_network
-      - db_network
 
 volumes:
   static_volume:
-
-
-
-
-      # node:
-  #   build: ./deans-frontend
-  #   ports:
-  #   - "3000:3000"
-  #   expose:
-  #     - 3000
-  #   volumes:
-  #    - ./deans-frontend:/work/
-  #   ports:
-  #     - "3000"
-  #   command: bash -c "yarn install; yarn start"
-  #   networks: 
-  #     - nginx_network
